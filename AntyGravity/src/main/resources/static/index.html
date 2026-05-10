@@ -1,0 +1,2306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoTogether</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎥</text></svg>">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --rose: #e8325a;
+            --rose-dark: #b02040;
+            --rose-glow: rgba(232, 50, 90, .18);
+            --ink: #1a1025;
+            --ink2: #3a2a40;
+            --mist: #f7f3f8;
+            --mist2: #ede8f0;
+            --green: #22c97a;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --ff-head: 'Playfair Display', Georgia, serif;
+            --ff-body: 'DM Sans', sans-serif;
+            --r: 14px;
+            --r-lg: 22px;
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: var(--ff-body);
+            background: var(--ink);
+            color: #fff;
+            overflow-x: hidden
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 20% 10%, rgba(232, 50, 90, .22) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 80% 90%, rgba(120, 40, 180, .18) 0%, transparent 60%),
+                linear-gradient(160deg, #1a1025 0%, #120e1c 100%);
+        }
+
+        .wrap {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px
+        }
+
+        .page {
+            display: none;
+            animation: rise .45s ease both
+        }
+
+        .page.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            width: 100%;
+            max-width: 900px
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(22px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        /* Landing */
+        .landing-inner {
+            text-align: center;
+            padding: 40px 20px
+        }
+
+        .brand {
+            font-family: var(--ff-head);
+            font-size: clamp(2.8rem, 7vw, 5rem);
+            line-height: 1;
+            letter-spacing: -.02em;
+            margin-bottom: 16px
+        }
+
+        .brand em {
+            color: var(--rose);
+            font-style: normal
+        }
+
+        .tagline {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, .55);
+            margin-bottom: 48px;
+            font-weight: 300
+        }
+
+        .cta-row {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 26px;
+            border-radius: 40px;
+            border: none;
+            font-family: var(--ff-body);
+            font-size: .92rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .25s;
+            white-space: nowrap
+        }
+
+        .btn-rose {
+            background: var(--rose);
+            color: #fff
+        }
+
+        .btn-rose:hover {
+            background: var(--rose-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--rose-glow)
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #fff;
+            border: 1.5px solid rgba(255, 255, 255, .25)
+        }
+
+        .btn-outline:hover {
+            border-color: var(--rose);
+            color: var(--rose);
+            transform: translateY(-2px)
+        }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, .07);
+            color: rgba(255, 255, 255, .7);
+            border: 1px solid rgba(255, 255, 255, .1)
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, .13);
+            color: #fff
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: .82rem
+        }
+
+        .btn-danger {
+            background: #c0283a;
+            color: #fff
+        }
+
+        .btn-danger:hover {
+            background: #9b1e2d
+        }
+
+        /* Glass card */
+        .glass {
+            background: rgba(255, 255, 255, .06);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: var(--r-lg);
+            padding: 40px 36px;
+            width: 100%;
+            max-width: 480px
+        }
+
+        .glass h2 {
+            font-family: var(--ff-head);
+            font-size: 1.9rem;
+            margin-bottom: 28px;
+            text-align: center
+        }
+
+        .glass h2 i {
+            color: var(--rose);
+            margin-right: 8px
+        }
+
+        /* Form */
+        .fgroup {
+            margin-bottom: 20px
+        }
+
+        .fgroup label {
+            display: block;
+            font-size: .82rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, .55);
+            margin-bottom: 7px;
+            text-transform: uppercase;
+            letter-spacing: .06em
+        }
+
+        .fgroup input[type=text],
+        .fgroup input[type=file] {
+            width: 100%;
+            padding: 11px 15px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(255, 255, 255, .12);
+            background: rgba(255, 255, 255, .06);
+            color: #fff;
+            font-family: var(--ff-body);
+            font-size: .92rem;
+            transition: all .25s
+        }
+
+        .fgroup input[type=text]:focus {
+            outline: none;
+            border-color: var(--rose);
+            background: rgba(232, 50, 90, .08)
+        }
+
+        .fgroup input[type=file] {
+            cursor: pointer
+        }
+
+        .fgroup small {
+            display: block;
+            margin-top: 6px;
+            font-size: .78rem;
+            color: rgba(255, 255, 255, .35)
+        }
+
+        .fgroup input[type=text]::placeholder {
+            color: rgba(255, 255, 255, .25)
+        }
+
+        .form-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 8px
+        }
+
+        /* Room details */
+        .detail-box {
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: var(--r);
+            padding: 22px;
+            margin-bottom: 24px
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .08)
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0
+        }
+
+        .detail-row .dlabel {
+            font-size: .8rem;
+            color: rgba(255, 255, 255, .45);
+            text-transform: uppercase;
+            letter-spacing: .05em
+        }
+
+        .detail-row .dval {
+            font-weight: 600;
+            font-size: 1rem;
+            letter-spacing: .08em;
+            color: var(--rose)
+        }
+
+        .share-hint {
+            font-size: .85rem;
+            color: rgba(255, 255, 255, .4);
+            text-align: center;
+            margin-bottom: 24px;
+            line-height: 1.6
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap
+        }
+
+        /* Room page */
+        .room-wrap {
+            width: 100%;
+            max-width: 1060px;
+            border-radius: var(--r-lg);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .1);
+            background: rgba(15, 10, 22, .85);
+            backdrop-filter: blur(24px)
+        }
+
+        .room-hdr {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 22px;
+            background: rgba(232, 50, 90, .12);
+            border-bottom: 1px solid rgba(232, 50, 90, .2)
+        }
+
+        .room-title {
+            font-family: var(--ff-head);
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .role-pill {
+            font-family: var(--ff-body);
+            font-size: .72rem;
+            font-weight: 500;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: var(--rose);
+            color: #fff;
+            letter-spacing: .04em
+        }
+
+        .hdr-right {
+            display: flex;
+            align-items: center;
+            gap: 14px
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: .78rem;
+            color: rgba(255, 255, 255, .5)
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: #555
+        }
+
+        .dot.ok {
+            background: var(--green)
+        }
+
+        .dot.wait {
+            background: var(--amber);
+            animation: blink .9s ease-in-out infinite
+        }
+
+        .dot.err {
+            background: var(--red)
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .25
+            }
+        }
+
+        /* Player */
+        .player-area {
+            position: relative;
+            background: #000;
+            min-height: 360px;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        #vPlayer {
+            width: 100%;
+            max-height: 480px;
+            display: none
+        }
+
+        #aPlayer {
+            width: 100%;
+            height: 54px;
+            background: #111;
+            display: none
+        }
+
+        .no-media {
+            text-align: center;
+            color: rgba(255, 255, 255, .35);
+            padding: 50px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center
+        }
+
+        .no-media i {
+            font-size: 2.8rem;
+            margin-bottom: 14px;
+            color: rgba(255, 255, 255, .15)
+        }
+
+        .no-media p {
+            font-size: .9rem;
+            line-height: 1.6;
+            max-width: 300px
+        }
+
+        .load-bar-wrap {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: rgba(255, 255, 255, .08)
+        }
+
+        .load-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--rose), #ff80ab);
+            transition: width .25s
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, .04);
+            border-top: 1px solid rgba(255, 255, 255, .07);
+            flex-wrap: wrap;
+            justify-content: center
+        }
+
+        /* Chat */
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            height: 260px;
+            border-top: 1px solid rgba(255, 255, 255, .08);
+            margin-bottom: 56px;
+            /* Offset for fixed chat bar */
+        }
+
+        .chat-hdr {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, .04);
+            border-bottom: 1px solid rgba(255, 255, 255, .07)
+        }
+
+        .chat-hdr span {
+            font-size: .85rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, .6)
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 4px
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .15);
+            border-radius: 4px
+        }
+
+        .msg {
+            padding: 8px 13px;
+            border-radius: 12px;
+            font-size: .85rem;
+            max-width: 82%;
+            animation: msgIn .25s ease
+        }
+
+        @keyframes msgIn {
+            from {
+                opacity: 0;
+                transform: translateX(-8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0)
+            }
+        }
+
+        .msg.sys {
+            background: rgba(255, 255, 255, .07);
+            color: rgba(255, 255, 255, .5);
+            text-align: center;
+            max-width: 100%;
+            font-style: italic;
+            font-size: .78rem;
+            border-radius: 8px
+        }
+
+        .msg.me {
+            background: var(--rose);
+            color: #fff;
+            margin-left: auto;
+            animation: msgInR .25s ease
+        }
+
+        @keyframes msgInR {
+            from {
+                opacity: 0;
+                transform: translateX(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0)
+            }
+        }
+
+        .msg.them {
+            background: rgba(255, 255, 255, .1);
+            color: rgba(255, 255, 255, .9)
+        }
+
+        .msg.synclog {
+            display: none;
+            background: rgba(245, 158, 11, .1);
+            color: rgba(245, 158, 11, .8);
+            text-align: center;
+            font-size: .76rem;
+            max-width: 100%;
+            border-radius: 6px;
+            font-style: italic
+        }
+
+        .msg.synclog.vis {
+            display: block
+        }
+
+        .chat-inp {
+            display: flex;
+            gap: 8px;
+            padding: 10px 14px;
+            border-top: 1px solid rgba(255, 255, 255, .07);
+            background: rgba(15, 10, 22, 0.95);
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 900px;
+            z-index: 1000;
+            box-sizing: border-box;
+            border-bottom-left-radius: var(--r-lg);
+            border-bottom-right-radius: var(--r-lg);
+        }
+
+        .chat-inp input {
+            flex: 1;
+            background: rgba(255, 255, 255, .07);
+            border: 1.5px solid rgba(255, 255, 255, .1);
+            border-radius: 22px;
+            padding: 8px 14px;
+            color: #fff;
+            font-family: var(--ff-body);
+            font-size: .85rem
+        }
+
+        .chat-inp input:focus {
+            outline: none;
+            border-color: var(--rose)
+        }
+
+        .chat-inp input::placeholder {
+            color: rgba(255, 255, 255, .25)
+        }
+
+        .send-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--rose);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .85rem;
+            transition: all .2s;
+            flex-shrink: 0
+        }
+
+        .send-btn:hover {
+            background: var(--rose-dark);
+            transform: scale(1.1)
+        }
+
+        .rxn-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 4px;
+            transition: transform 0.1s;
+        }
+
+        .rxn-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .rxn-bubble {
+            position: absolute;
+            bottom: 60px;
+            right: 40px;
+            font-size: 2.5rem;
+            pointer-events: none;
+            z-index: 9999;
+            animation: floatUp 2s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            10% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+            100% { transform: translateY(-300px) scale(1); opacity: 0; }
+        }
+
+        /* Media source tabs */
+        .media-tabs {
+            display: flex;
+            gap: 0;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1.5px solid rgba(255, 255, 255, .12);
+            margin-top: 4px
+        }
+
+        .media-tab {
+            flex: 1;
+            padding: 9px 14px;
+            background: rgba(255, 255, 255, .04);
+            border: none;
+            color: rgba(255, 255, 255, .5);
+            font-family: var(--ff-body);
+            font-size: .85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px
+        }
+
+        .media-tab:first-child {
+            border-right: 1.5px solid rgba(255, 255, 255, .12)
+        }
+
+        .media-tab.active {
+            background: var(--rose);
+            color: #fff
+        }
+
+        .media-tab:not(.active):hover {
+            background: rgba(255, 255, 255, .1);
+            color: #fff
+        }
+
+        /* Saved Rooms */
+        .my-rooms {
+            margin-top: 40px;
+            width: 100%;
+            max-width: 480px;
+            animation: rise 0.5s ease backwards;
+            animation-delay: 0.1s;
+        }
+
+        .my-rooms h3 {
+            font-family: var(--ff-head);
+            font-size: 1.4rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .room-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .room-card {
+            background: rgba(255, 255, 255, .05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 14px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all .25s ease;
+        }
+
+        .room-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, .09);
+            border-color: rgba(232, 50, 90, .3);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, .2);
+        }
+
+        .rc-left {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .rc-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: .02em;
+        }
+
+        .rc-meta {
+            font-size: .78rem;
+            color: rgba(255, 255, 255, .5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .rc-role {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: .7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .rc-role.host {
+            background: rgba(232, 50, 90, .15);
+            color: var(--rose);
+            border: 1px solid rgba(232, 50, 90, .3);
+        }
+
+        .rc-role.guest {
+            background: rgba(34, 201, 122, .15);
+            color: var(--green);
+            border: 1px solid rgba(34, 201, 122, .3);
+        }
+
+        .btn-del-room {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, .1);
+            color: rgba(255, 255, 255, .4);
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .btn-del-room:hover {
+            background: rgba(239, 68, 68, .15);
+            color: var(--red);
+            border-color: rgba(239, 68, 68, .4);
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        @media(max-width:640px) {
+            .glass {
+                padding: 28px 20px
+            }
+
+            .cta-row,
+            .detail-actions {
+                flex-direction: column;
+                align-items: center
+            }
+
+            .btn {
+                width: 200px;
+                justify-content: center
+            }
+
+            .room-hdr {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center
+            }
+
+            .controls {
+                gap: 7px
+            }
+
+            .controls .btn {
+                font-size: .78rem;
+                padding: 7px 12px
+            }
+        }
+
+        .player-area:fullscreen,
+        .player-area:-webkit-full-screen {
+            background: #000;
+        }
+
+        .player-area:fullscreen #vPlayer,
+        .player-area:-webkit-full-screen #vPlayer,
+        .player-area:fullscreen #ytPlayer,
+        .player-area:-webkit-full-screen #ytPlayer {
+            max-height: none !important;
+            height: 100% !important;
+        }
+
+        #btnExitFs {
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: var(--ff-body);
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+        }
+
+        .player-area:fullscreen #btnExitFs,
+        .player-area:-webkit-full-screen #btnExitFs {
+            display: block;
+        }
+
+        #btnFsChat {
+            display: none;
+            position: absolute;
+            bottom: 90px;
+            right: 20px;
+            z-index: 9999;
+            background: rgba(232, 50, 90, 0.8);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: var(--ff-body);
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            align-items: center;
+            gap: 6px;
+        }
+
+        .player-area:fullscreen #btnFsChat,
+        .player-area:-webkit-full-screen #btnFsChat {
+            display: flex;
+        }
+
+        #fsChatBadge {
+            display: none;
+            background: #fff;
+            color: var(--rose);
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        .player-area:fullscreen .chat-area {
+            position: absolute;
+            right: 20px;
+            bottom: 140px;
+            width: 320px;
+            height: 400px;
+            background: rgba(15, 10, 22, 0.95);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--r-lg);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            margin: 0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .player-area:fullscreen .chat-area.show-fs {
+            display: flex;
+        }
+
+        .player-area:fullscreen .chat-inp {
+            position: static;
+            transform: none;
+            width: 100%;
+            border-radius: 0 0 var(--r-lg) var(--r-lg);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: transparent;
+        }
+
+        #fsChatCloseBtn {
+            display: none;
+        }
+
+        .player-area:fullscreen #fsChatCloseBtn {
+            display: inline-block;
+        }
+
+        .player-area:fullscreen .chat-hdr {
+            cursor: grab;
+            user-select: none;
+        }
+        
+        .player-area:fullscreen .chat-hdr:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+
+        <!-- LANDING / MAIN -->
+        <div id="pgLanding" class="page active">
+            <div class="landing-inner" style="padding-bottom:10px">
+                <div class="brand">Video<em>Together</em></div>
+                <p class="tagline">Watch movies &amp; music in perfect sync</p>
+                <div class="cta-row" style="margin-bottom: 5px;">
+                    <button class="btn btn-rose" id="btnShowCreate" onclick="switchAction('create')"><i
+                            class="fas fa-plus-circle"></i> Create Room</button>
+                    <button class="btn btn-outline" id="btnShowJoin" onclick="switchAction('join')"><i
+                            class="fas fa-sign-in-alt"></i> Join Room</button>
+                </div>
+            </div>
+
+            <div class="glass" id="actionGlass" style="margin-top:0; display:none;">
+
+                <!-- CREATE -->
+                <div id="viewCreate">
+                    <div class="fgroup">
+                        <label>Room Name</label>
+                        <input type="text" id="cRoomName" placeholder="e.g. MovieNight" autocomplete="off">
+                    </div>
+                    <!-- Media source tabs -->
+                    <div class="fgroup">
+                        <label>Media Source</label>
+                        <div class="media-tabs">
+                            <button class="media-tab active" id="tabYT" onclick="switchMediaTab('yt')"><i
+                                    class="fab fa-youtube"></i> YouTube URL</button>
+                            <button class="media-tab" id="tabFile" onclick="switchMediaTab('file')"><i
+                                    class="fas fa-upload"></i> Upload File</button>
+                        </div>
+                    </div>
+                    <div class="fgroup" id="ytGroup">
+                        <label>YouTube URL</label>
+                        <input type="text" id="cYTUrl" placeholder="https://www.youtube.com/watch?v=..."
+                            autocomplete="off">
+                        <small>Paste any YouTube video link — playback is synced for everyone</small>
+                    </div>
+                    <div class="fgroup" id="fileGroup" style="display:none">
+                        <label>Upload Movie / Music</label>
+                        <input type="file" id="cFile" accept="video/*,audio/*">
+                        <small>MP4, WebM, MKV, MP3, WAV — streamed directly to your guest</small>
+                    </div>
+                    <div class="form-actions" style="margin-top: 24px;">
+                        <button class="btn btn-rose" onclick="createRoom()"><i class="fas fa-rocket"></i> Create &amp;
+                            Enter
+                            Room</button>
+                    </div>
+                </div>
+
+                <!-- JOIN -->
+                <div id="viewJoin" style="display:none">
+                    <div class="fgroup">
+                        <label>Room Name</label>
+                        <input type="text" id="jRoomName" placeholder="Ask the host for this" autocomplete="off">
+                    </div>
+                    <div class="fgroup">
+                        <label>Security Key</label>
+                        <input type="text" id="jKey" placeholder="8-character key" maxlength="8"
+                            style="text-transform:uppercase;letter-spacing:.12em" autocomplete="off">
+                    </div>
+                    <div class="form-actions" style="margin-top: 24px;">
+                        <button class="btn btn-rose" onclick="joinRoom()"><i class="fas fa-sign-in-alt"></i> Join
+                            Room</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- MY ROOMS -->
+            <div class="my-rooms" id="myRoomsSec" style="display:none">
+                <h3><i class="fas fa-history" style="color:var(--rose)"></i> Saved Rooms</h3>
+                <div class="room-list" id="myRoomsList"></div>
+            </div>
+
+        </div>
+
+        <!-- DETAILS -->
+        <div id="pgDetails" class="page">
+            <div class="glass" style="max-width:520px">
+                <h2><i class="fas fa-check-circle"></i> Room Ready</h2>
+                <div class="detail-box">
+                    <div class="detail-row"><span class="dlabel">Room Name</span><span class="dval" id="dName">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="dlabel">Security Key</span>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <span class="dval" id="dKey">—</span>
+                            <button class="btn btn-ghost btn-sm" onclick="copyKey()"><i
+                                    class="fas fa-copy"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <p class="share-hint">Share the room name &amp; key with your partner.<br>They open <strong>this same
+                        HTML file</strong> in another tab or browser and click "Join Room".<br>The video will stream to
+                    them automatically — no upload needed on their end.</p>
+                <div class="detail-actions">
+                    <button class="btn btn-rose" onclick="enterRoomAsHost()"><i class="fas fa-play"></i> Enter
+                        Room</button>
+                    <button class="btn btn-ghost" onclick="goPage('pgLanding')">Home</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROOM -->
+        <div id="pgRoom" class="page" style="min-height:unset;align-items:stretch">
+            <div class="room-wrap">
+
+                <div class="room-hdr">
+                    <div class="room-title">
+                        <i class="fas fa-film" style="color:var(--rose)"></i>
+                        <span id="rName">Room</span>
+                        <span class="role-pill" id="rRole">Host</span>
+                    </div>
+                    <div class="hdr-right">
+                        <div class="status">
+                            <div class="dot wait" id="sDot"></div><span id="sLabel">Connecting…</span>
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="leaveRoom()"><i class="fas fa-sign-out-alt"></i>
+                            Leave</button>
+                    </div>
+                </div>
+
+                <div class="player-area">
+                    <video id="vPlayer" controls></video>
+                    <audio id="aPlayer" controls></audio>
+                    <div id="ytPlayer" style="display:none;width:100%;aspect-ratio:16/9;max-height:480px"></div>
+                    <div class="no-media" id="noMedia">
+                        <i class="fas fa-satellite-dish"></i>
+                        <p id="noMediaTxt">Waiting for host to stream media…</p>
+                    </div>
+                    <div class="load-bar-wrap">
+                        <div class="load-bar" id="loadBar"></div>
+                    </div>
+                    <button id="btnExitFs" onclick="toggleFullscreen()"><i class="fas fa-compress"></i> Exit
+                        Fullscreen</button>
+                    <button id="btnFsChat" onclick="toggleFsChat()"><i class="fas fa-comments"></i> Chat <span
+                            id="fsChatBadge">!</span></button>
+                </div>
+
+                <div class="controls" id="controlsBar">
+                    <button class="btn btn-rose btn-sm" id="btnPlay" onclick="ctrlPlay()"><i class="fas fa-play"></i>
+                        Play</button>
+                    <button class="btn btn-ghost btn-sm" id="btnPause" onclick="ctrlPause()"><i
+                            class="fas fa-pause"></i> Pause</button>
+                    <button class="btn btn-ghost btn-sm" id="btnBack" onclick="ctrlSeek(-10)"><i
+                            class="fas fa-backward"></i> −10s</button>
+                    <button class="btn btn-ghost btn-sm" id="btnFwd" onclick="ctrlSeek(10)"><i
+                            class="fas fa-forward"></i> +10s</button>
+                    <button class="btn btn-ghost btn-sm" id="btnFullscreen" onclick="toggleFullscreen()"><i
+                            class="fas fa-expand"></i> Full</button>
+                    <button class="btn btn-ghost btn-sm" id="syncToggle" onclick="toggleSync()"><i
+                            class="fas fa-eye"></i> Sync log</button>
+                </div>
+
+                <div class="chat-area" id="chatArea">
+                    <div class="chat-hdr">
+                        <span><i class="fas fa-comments" style="color:var(--rose);margin-right:6px"></i>Chat</span>
+                        <button id="fsChatCloseBtn" class="btn btn-ghost btn-sm" onclick="toggleFsChat()"><i
+                                class="fas fa-times"></i></button>
+                    </div>
+                    <div class="messages" id="msgs">
+                        <div class="msg sys">Welcome! 👋</div>
+                    </div>
+                    <div class="chat-inp">
+                        <button class="rxn-btn" onclick="sendReaction('❤️')">❤️</button>
+                        <button class="rxn-btn" onclick="sendReaction('😂')">😂</button>
+                        <input type="text" id="chatIn" placeholder="Say something…" maxlength="200" style="flex:1">
+                        <button class="send-btn" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* ════════════════════════════════════════════════════════════════
+           VideoTogether — BroadcastChannel file-streaming sync
+           ────────────────────────────────────────────────────────────────
+           The host reads its File as one ArrayBuffer, slices it into
+           512 KB chunks, and sends each chunk through BroadcastChannel.
+           The guest collects every chunk, builds a Blob, and sets it as
+           the player src — so no upload is required on the guest side.
+           Play/Pause/Seek events are then broadcast in real time.
+           ════════════════════════════════════════════════════════════════ */
+
+        const CHUNK_SIZE = 64 * 1024; // 64KB for safer WebRTC chunks
+        const HEARTBEAT_MS = 4000;
+        const WARN_MB = 500;
+        const IDB_NAME = 'VideoTogether';
+        const IDB_STORE = 'files';
+        const IDB_KEY = 'hostFile';
+        const LS_KEY = 'vt_session';
+
+        let peer = null;
+        let connections = []; // Host->Guests
+        let hostConn = null;  // Guest->Host
+        let room = null;
+        let isHost = false;
+        let hostFile = null;
+        let player = null;
+        let showSync = false;
+        let hbTimer = null;
+        let expectedSyncTime = null;
+        let expectedPlayState = null;
+        let pendingYtSync = null;
+        let hostListenersAttached = false;
+        let mediaMode = 'yt';   // 'yt' | 'file'
+        let hostStreamUrl = null;
+
+        // YouTube IFrame API
+        let ytPlayer = null;
+
+        // Guest reassembly
+        let gChunks = [];
+        let gTotal = 0;
+        let gReceived = 0;
+        let gMime = '';
+        let guestHasFile = false;
+
+        // ── IndexedDB helpers ─────────────────────────────────
+        function idbOpen() {
+            return new Promise((res, rej) => {
+                const req = indexedDB.open(IDB_NAME, 1);
+                req.onupgradeneeded = e => e.target.result.createObjectStore(IDB_STORE);
+                req.onsuccess = e => res(e.target.result);
+                req.onerror = e => rej(e.target.error);
+            });
+        }
+        async function idbSave(blob, key = IDB_KEY) {
+            const db = await idbOpen();
+            return new Promise((res, rej) => {
+                const tx = db.transaction(IDB_STORE, 'readwrite');
+                tx.objectStore(IDB_STORE).put(blob, key);
+                tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
+            });
+        }
+        async function idbLoad(key = IDB_KEY) {
+            const db = await idbOpen();
+            return new Promise((res, rej) => {
+                const tx = db.transaction(IDB_STORE, 'readonly');
+                const req = tx.objectStore(IDB_STORE).get(key);
+                req.onsuccess = e => res(e.target.result || null);
+                req.onerror = e => rej(e.target.error);
+            });
+        }
+        async function idbClear(key = IDB_KEY) {
+            const db = await idbOpen();
+            return new Promise((res) => {
+                const tx = db.transaction(IDB_STORE, 'readwrite');
+                tx.objectStore(IDB_STORE).delete(key);
+                tx.oncomplete = res;
+            });
+        }
+
+        // ── Session persistence ───────────────────────────────
+        function saveSession(extraState = {}) {
+            if (!room) return;
+            const data = { room, isHost, ...extraState };
+            sessionStorage.setItem(LS_KEY, JSON.stringify(data));
+        }
+        function clearSession() {
+            sessionStorage.removeItem(LS_KEY);
+        }
+
+        const vp = document.getElementById('vPlayer');
+        const ap = document.getElementById('aPlayer');
+
+        // ── Saved Rooms ──────────────────────────────────────
+        function loadSavedRooms() {
+            try {
+                const rs = JSON.parse(localStorage.getItem('vt_my_rooms') || '[]');
+                const sec = document.getElementById('myRoomsSec');
+                const list = document.getElementById('myRoomsList');
+                if (!rs || rs.length === 0) {
+                    sec.style.display = 'none';
+                    return;
+                }
+                sec.style.display = 'block';
+                list.innerHTML = '';
+                rs.forEach((r, idx) => {
+                    const roleCls = r.isHost ? 'host' : 'guest';
+                    const roleTxt = r.isHost ? 'Host' : 'Guest';
+                    list.innerHTML += `
+                        <div class="room-card" onclick="quickJoin(${idx})">
+                            <div class="rc-left">
+                                <span class="rc-title">${esc(r.name)}</span>
+                                <span class="rc-meta">
+                                    <span class="rc-role ${roleCls}"><i class="fas ${r.isHost ? 'fa-crown' : 'fa-user'}"></i> ${roleTxt}</span>
+                                    <span>•</span>
+                                    <span>Key: ${esc(r.key)}</span>
+                                    ${r.ytId ? '<span>•</span><span><i class="fab fa-youtube"></i></span>' : ''}
+                                </span>
+                            </div>
+                            <div class="rc-actions">
+                                <button class="btn-del-room" onclick="event.stopPropagation(); deleteSavedRoom(${idx})" title="Remove Room"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) { }
+        }
+
+        function saveRoomData() {
+            if (!room) return;
+            try {
+                let rs = JSON.parse(localStorage.getItem('vt_my_rooms') || '[]');
+                rs = rs.filter(r => r.name !== room.name);
+                rs.unshift({ name: room.name, key: room.key, isHost: isHost, ytId: room.ytId || null, ts: Date.now() });
+                if (rs.length > 15) rs = rs.slice(0, 15);
+                localStorage.setItem('vt_my_rooms', JSON.stringify(rs));
+                loadSavedRooms();
+            } catch (e) { }
+        }
+
+        function deleteSavedRoom(idx) {
+            if (!confirm('Remove this room from your history?')) return;
+            try {
+                let rs = JSON.parse(localStorage.getItem('vt_my_rooms') || '[]');
+                const r = rs[idx];
+                if (r && !r.ytId) idbClear(r.name).catch(() => {});
+                rs.splice(idx, 1);
+                localStorage.setItem('vt_my_rooms', JSON.stringify(rs));
+                loadSavedRooms();
+            } catch (e) { }
+        }
+
+        async function quickJoin(idx) {
+            try {
+                let rs = JSON.parse(localStorage.getItem('vt_my_rooms') || '[]');
+                const r = rs[idx];
+                if (!r) return;
+
+                room = { name: r.name, key: r.key, ytId: r.ytId };
+                isHost = r.isHost;
+
+                if (isHost && !r.ytId) {
+                    const blob = await idbLoad(room.name);
+                    if (blob) {
+                        hostFile = new File([blob], 'restored', { type: blob.type });
+                        saveSession();
+                        openRoom();
+                        loadAndStreamFile(hostFile);
+                    } else {
+                        saveSession();
+                        openRoom();
+                        toast('Please select your local file to resume streaming', 'info');
+                    }
+                } else if (!isHost) {
+                    let blob = null;
+                    if (!r.ytId) blob = await idbLoad(room.name);
+                    if (blob) guestHasFile = true;
+
+                    saveSession();
+                    openRoom();
+
+                    if (blob) {
+                        const url = URL.createObjectURL(blob);
+                        setPlayerSrc(url, blob.type);
+                        sysMsg('Loaded previously downloaded stream from cache.', true);
+                        setStatus('wait', 'Waiting for host to sync playback…');
+                        if (!sharedListenersAttached) attachSharedListeners();
+                    } else {
+                        setStatus('wait', 'Waiting for host…');
+                        noMedia('<i class="fas fa-satellite-dish"></i>', 'Connected — waiting for host to stream the file…');
+                        sysMsg('Joined as guest. The host\'s video will load here automatically.');
+                    }
+                } else {
+                    saveSession();
+                    openRoom();
+                }
+            } catch (e) { }
+        }
+
+        document.getElementById('chatIn').addEventListener('keypress', e => { if (e.key === 'Enter') sendChat(); });
+        document.getElementById('jKey').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
+
+        window.addEventListener('DOMContentLoaded', loadSavedRooms);
+
+        // ── Auto-restore on page load ────────────────────────
+        async function tryRestore() {
+            const raw = sessionStorage.getItem(LS_KEY);
+            if (!raw) return;
+            let session;
+            try { session = JSON.parse(raw); } catch (e) { return; }
+            if (!session || !session.room) return;
+
+            room = session.room;
+            isHost = session.isHost;
+
+            // YouTube room restore
+            if (room.ytId) {
+                openRoom();
+                initYTPlayer(room.ytId);
+                if (session.time > 1) {
+                    setTimeout(() => { if (ytPlayer && ytPlayer.seekTo) ytPlayer.seekTo(session.time, true); }, 2500);
+                }
+                toast('Room restored after refresh', 'ok');
+                return;
+            }
+
+            if (isHost) {
+                // Restore file from IndexedDB
+                const blob = await idbLoad(room.name);
+                if (!blob) {
+                    clearSession();
+                    showRestorePrompt(session.room);
+                    return;
+                }
+                hostFile = new File([blob], 'restored', { type: blob.type });
+                openRoom();
+                loadAndStreamFile(hostFile, session.time || 0);
+                toast('Room restored after refresh', 'ok');
+            } else {
+                let blob = null;
+                if (!room.ytId) blob = await idbLoad(room.name);
+                if (blob) guestHasFile = true;
+
+                // Guest: re-join and wait for host to re-stream
+                openRoom();
+                setStatus('wait', 'Reconnecting…');
+                noMedia('<i class="fas fa-satellite-dish"></i>', 'Reconnecting to host…');
+                sysMsg('Reconnected after refresh — waiting for host stream.');
+                toast('Reconnected to room', 'ok');
+
+                if (blob) {
+                    const url = URL.createObjectURL(blob);
+                    setPlayerSrc(url, blob.type);
+                    sysMsg('Restored previously received stream from cache.', true);
+                    setStatus('wait', 'Waiting for host to sync playback…');
+                    if (!sharedListenersAttached) attachSharedListeners();
+                }
+            }
+        }
+
+        function showRestorePrompt(roomInfo) {
+            // File was cleared from IDB — ask host to re-upload
+            goPage('pgLanding');
+            switchAction('create');
+            document.getElementById('cRoomName').value = roomInfo.name;
+            toast('Session found but file was cleared — please re-upload the file', 'warn');
+        }
+
+        // ── Action tab switching ──────────────────────────────
+        function switchAction(action) {
+            document.getElementById('actionGlass').style.display = 'block';
+            document.getElementById('viewCreate').style.display = action === 'create' ? 'block' : 'none';
+            document.getElementById('viewJoin').style.display = action === 'join' ? 'block' : 'none';
+
+            if (action === 'create') {
+                document.getElementById('btnShowCreate').className = 'btn btn-rose';
+                document.getElementById('btnShowJoin').className = 'btn btn-outline';
+            } else {
+                document.getElementById('btnShowCreate').className = 'btn btn-outline';
+                document.getElementById('btnShowJoin').className = 'btn btn-rose';
+            }
+        }
+
+        // ── Media tab switching ──────────────────────────────
+        function switchMediaTab(mode) {
+            mediaMode = mode;
+            document.getElementById('tabYT').classList.toggle('active', mode === 'yt');
+            document.getElementById('tabFile').classList.toggle('active', mode === 'file');
+            document.getElementById('ytGroup').style.display = mode === 'yt' ? '' : 'none';
+            document.getElementById('fileGroup').style.display = mode === 'file' ? '' : 'none';
+        }
+
+        function extractYTId(url) {
+            try {
+                const u = new URL(url.trim());
+                if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('?')[0];
+                if (u.hostname.includes('youtube.com')) {
+                    if (u.searchParams.get('v')) return u.searchParams.get('v');
+                    const m = u.pathname.match(/\/embed\/([^/?]+)/);
+                    if (m) return m[1];
+                }
+            } catch (_) { }
+            return null;
+        }
+
+        // ── YouTube player via direct iframe + postMessage ───
+
+        function initYTPlayer(videoId) {
+            // Remove stale listener before adding a fresh one
+            window.removeEventListener('message', onYTMessage);
+
+            const container = document.getElementById('ytPlayer');
+            document.getElementById('noMedia').style.display = 'none';
+
+            // Hide normal players
+            document.getElementById('vPlayer').style.display = 'none';
+            document.getElementById('vPlayer').src = '';
+            document.getElementById('aPlayer').style.display = 'none';
+            document.getElementById('aPlayer').src = '';
+
+            // Destroy previous player cleanly
+            if (ytPlayer && ytPlayer.destroy) { ytPlayer.destroy(); ytPlayer = null; }
+            container.innerHTML = '';
+
+            // Proper sizing
+            Object.assign(container.style, {
+                display: 'block',
+                position: 'relative',
+                width: '100%',
+                aspectRatio: '16/9',
+                maxHeight: '480px',
+                background: '#000'
+            });
+
+            let oRaw = location.origin && location.origin !== 'null' ? location.origin : 'https://localhost';
+            if (oRaw.indexOf('file://') === 0) oRaw = 'https://localhost';
+            const origin = encodeURIComponent(oRaw);
+
+            const params = [
+                'enablejsapi=1',
+                'autoplay=0',
+                `controls=${isHost ? 1 : 0}`,
+                `disablekb=${isHost ? 0 : 1}`,
+                'rel=0',
+                'modestbranding=1',
+                'fs=1',
+                `origin=${origin}`,
+                'widgetid=1'
+            ].join('&');
+
+            const iframe = document.createElement('iframe');
+            iframe.id = 'ytIframe';
+            iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?${params}`;
+            iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+            iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+            Object.assign(iframe.style, {
+                position: 'absolute', top: '0', left: '0',
+                width: '100%', height: '100%', border: 'none'
+            });
+            container.appendChild(iframe);
+
+            // postMessage control shim (mirrors YT IFrame API surface)
+            ytPlayer = {
+                _iframe: iframe,
+                _videoId: videoId,
+                _state: -1,
+                _currentTime: 0,
+                _playing: false,
+                _timer: null,
+                _cmd(func, args) {
+                    try { iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: args || [] }), '*'); }
+                    catch (_) { }
+                },
+                playVideo() { this._cmd('playVideo'); this._playing = true; },
+                pauseVideo() { this._cmd('pauseVideo'); this._playing = false; },
+                stopVideo() { this._cmd('stopVideo'); this._playing = false; },
+                seekTo(t, allow) { this._cmd('seekTo', [t, allow !== false]); this._currentTime = t; },
+                loadVideoById(id) { this._cmd('loadVideoById', [id]); },
+                getCurrentTime() { return this._currentTime; },
+                getPlayerState() { return this._state; },
+                destroy() { clearInterval(this._timer); }
+            };
+
+            // Tick time forward locally while playing (YT doesn't push currentTime)
+            ytPlayer._timer = setInterval(() => {
+                if (ytPlayer && ytPlayer._playing) ytPlayer._currentTime += 0.25;
+            }, 250);
+
+            window.addEventListener('message', onYTMessage);
+
+            if (isHost) {
+                attachYTHostListeners();
+                startHeartbeat();
+                toast('YouTube video ready — press Play to start', 'ok');
+            } else {
+                sysMsg('YouTube video loaded. Waiting for host to play…');
+                setStatus('ok', 'Host connected');
+            }
+        }
+
+        function onYTMessage(e) {
+            if (!e.data || typeof e.data !== 'string') return;
+            let d;
+            try { d = JSON.parse(e.data); } catch (_) { return; }
+            if (!d || d.channel !== 'widget' && !d.event) return;
+
+            if (d.event === 'infoDelivery' && d.info) {
+                if (typeof d.info.currentTime === 'number') ytPlayer._currentTime = d.info.currentTime;
+                if (typeof d.info.playerState === 'number') {
+                    ytPlayer._state = d.info.playerState;
+                    ytPlayer._playing = d.info.playerState === 1;
+                    // Broadcast state changes if host
+                    if (isHost && room) {
+                        if (d.info.playerState === 1) bcast({ type: 'play', room: room.name, time: ytPlayer._currentTime });
+                        if (d.info.playerState === 2) bcast({ type: 'pause', room: room.name, time: ytPlayer._currentTime });
+                    }
+                }
+            }
+            if (d.event === 'onError') {
+                const code = d.info;
+                let msg = 'This video cannot be embedded.';
+                if (code === 101 || code === 150) msg = 'This video\'s owner has disabled embedding. Use the direct YouTube link instead.';
+                showYTError(msg, ytPlayer ? ytPlayer._videoId : '');
+            }
+            if (d.event === 'onReady') {
+                // Request periodic info updates
+                try {
+                    document.getElementById('ytIframe').contentWindow.postMessage(
+                        JSON.stringify({ event: 'listening', id: '1', channel: 'widget' }), '*'
+                    );
+                    if (!isHost && pendingYtSync) {
+                        if (ytPlayer.seekTo) ytPlayer.seekTo(pendingYtSync.time, true);
+                        if (pendingYtSync.playing) {
+                            if (ytPlayer.playVideo) ytPlayer.playVideo();
+                        } else {
+                            if (ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+                        }
+                        pendingYtSync = null;
+                    }
+                } catch (_) { }
+            }
+        }
+
+        function showYTError(msg, videoId) {
+            const container = document.getElementById('ytPlayer');
+            container.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:280px;padding:30px;text-align:center;background:#0f0a1a">
+      <i class="fab fa-youtube" style="font-size:3rem;color:#ff0000;margin-bottom:16px"></i>
+      <p style="color:rgba(255,255,255,.7);margin-bottom:8px;font-size:.95rem">${msg}</p>
+      <p style="color:rgba(255,255,255,.4);font-size:.8rem;margin-bottom:20px">Try a different video, or use a video that allows embedding.</p>
+      ${videoId ? `<a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" class="btn btn-rose btn-sm" style="text-decoration:none"><i class="fab fa-youtube"></i> Open on YouTube</a>` : ''}
+    </div>`;
+        }
+
+        // ── Navigation ───────────────────────────────────────
+        function goPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // ── Create room ──────────────────────────────────────
+        function createRoom() {
+            const name = document.getElementById('cRoomName').value.trim();
+            if (!name) { toast('Enter a room name', 'err'); return; }
+
+            if (mediaMode === 'yt') {
+                const ytUrl = document.getElementById('cYTUrl').value.trim();
+                const vtId = extractYTId(ytUrl);
+                if (!vtId) { toast('Enter a valid YouTube URL', 'err'); return; }
+                room = { name, key: genKey(), ytId: vtId };
+                isHost = true;
+                document.getElementById('dName').textContent = room.name;
+                document.getElementById('dKey').textContent = room.key;
+                saveSession();
+                goPage('pgDetails');
+                toast('Room created!', 'ok');
+                return;
+            }
+
+            // file mode
+            const file = document.getElementById('cFile').files[0];
+            if (!file) { toast('Select a media file', 'err'); return; }
+            if (file.size > WARN_MB * 1024 * 1024) {
+                if (!confirm(`File is ${(file.size / 1024 / 1024).toFixed(0)} MB — large files take longer to stream. Continue?`)) return;
+            }
+            room = { name, key: genKey() };
+            hostFile = file;
+            isHost = true;
+            document.getElementById('dName').textContent = room.name;
+            document.getElementById('dKey').textContent = room.key;
+            saveSession();
+            idbSave(file, room.name).catch(() => { });
+            goPage('pgDetails');
+            toast('Room created!', 'ok');
+        }
+
+        function copyKey() {
+            navigator.clipboard.writeText(document.getElementById('dKey').textContent)
+                .then(() => toast('Key copied!', 'ok')).catch(() => { });
+        }
+
+        // ── Enter as host ────────────────────────────────────
+        function enterRoomAsHost() {
+            openRoom();
+            if (room.ytId) {
+                initYTPlayer(room.ytId);
+            } else {
+                loadAndStreamFile(hostFile);
+            }
+        }
+
+        // ── Join as guest ────────────────────────────────────
+        async function joinRoom() {
+            const name = document.getElementById('jRoomName').value.trim();
+            const key = document.getElementById('jKey').value.trim().toUpperCase();
+            if (!name) { toast('Enter room name', 'err'); return; }
+            if (key.length < 1) { toast('Enter security key', 'err'); return; }
+            room = { name, key };
+            isHost = false;
+
+            let blob = await idbLoad(room.name);
+            if (blob) guestHasFile = true;
+
+            saveSession();
+            openRoom();
+
+            if (blob) {
+                const url = URL.createObjectURL(blob);
+                setPlayerSrc(url, blob.type);
+                sysMsg('Loaded previously downloaded stream from cache.', true);
+                setStatus('wait', 'Waiting for host to sync playback…');
+                if (!sharedListenersAttached) attachSharedListeners();
+            } else {
+                setStatus('wait', 'Waiting for host…');
+                noMedia('<i class="fas fa-satellite-dish"></i>', 'Connected — waiting for host to stream the file…');
+                sysMsg('Joined as guest. The host\'s video will load here automatically.');
+            }
+        }
+
+        function getPeerId() {
+            return 'vt_' + room.name.replace(/[^a-zA-Z0-9]/g, '') + '_' + room.key;
+        }
+
+        function setupPeerNetwork() {
+            if (peer) peer.destroy();
+            connections = [];
+            hostConn = null;
+
+            const peerOptions = {
+                debug: 2,
+                config: {
+                    'iceServers': [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+                        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+                        { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+                    ]
+                }
+            };
+
+            if (isHost) {
+                peer = new Peer(getPeerId(), peerOptions);
+                peer.on('open', () => setStatus('ok', 'Broadcasting'));
+                peer.on('connection', (conn) => {
+                    connections.push(conn);
+                    conn.on('data', data => onMsg({ data }));
+                    conn.on('close', () => connections = connections.filter(c => c !== conn));
+                });
+                peer.on('error', (err) => {
+                    console.error(err);
+                    if (err.type === 'unavailable-id') toast('Room or Key collision on server!', 'err');
+                    setStatus('err', 'Network error');
+                });
+            } else {
+                peer = new Peer(peerOptions);
+                peer.on('open', () => {
+                    setStatus('wait', 'Connecting…');
+                    hostConn = peer.connect(getPeerId(), { reliable: true });
+                    hostConn.on('open', () => {
+                        setStatus('wait', 'Waiting for media…');
+                        bcast({ type: 'guest_hello', room: room.name, key: room.key, hasFile: guestHasFile });
+                    });
+                    hostConn.on('data', data => onMsg({ data }));
+                    hostConn.on('close', () => {
+                        leaveRoom(true);
+                        toast('Host closed the room', 'warn');
+                    });
+                });
+                peer.on('error', (err) => {
+                    console.error(err);
+                    setStatus('err', 'Connection failed');
+                });
+            }
+        }
+
+        // -- Open channel & room UI
+        function openRoom() {
+            goPage('pgRoom');
+            document.getElementById('rName').textContent = room.name;
+            document.getElementById('rRole').textContent = isHost ? 'Host' : 'Guest';
+            document.getElementById('msgs').innerHTML = '<div class="msg sys">Welcome! 👋</div>';
+            setupPeerNetwork();
+            saveRoomData();
+
+            // Everyone gets playback buttons
+            ['btnPlay', 'btnPause', 'btnBack', 'btnFwd'].forEach(id => {
+                document.getElementById(id).style.display = '';
+            });
+
+            // Ensure YouTube overlay is hidden so guests can interact with it
+            let ytOverlay = document.getElementById('ytOverlay');
+            if (ytOverlay) ytOverlay.style.display = 'none';
+
+            if (isHost) setStatus('ok', 'Broadcasting');
+        }
+
+        // ── Host: read file → upload to server → stream ────────────────────
+        async function loadAndStreamFile(file, resumeTime = 0) {
+            const url = URL.createObjectURL(file);
+            setPlayerSrc(url, file.type, resumeTime);
+            sysMsg(`"${file.name}" loaded.${resumeTime > 0 ? ' Resuming at ' + fmt(resumeTime) + '.' : ''}`);
+            
+            // Upload to Java backend for streaming
+            sysMsg(`Uploading ${(file.size / 1024 / 1024).toFixed(1)} MB to server for fast streaming…`, true);
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const res = await fetch('/api/video/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!res.ok) throw new Error('Upload failed');
+                const data = await res.json();
+                
+                hostStreamUrl = data.streamUrl;
+                sysMsg('Upload complete! Video is now streaming to guests.', true);
+                
+                // Tell all connected guests to stream from this URL
+                bcast({ type: 'stream_url', room: room.name, url: hostStreamUrl, mime: file.type });
+                
+                if (!sharedListenersAttached) {
+                    attachSharedListeners();
+                }
+                startHeartbeat();
+            } catch (err) {
+                toast('Failed to upload video to streaming server', 'err');
+                sysMsg('Error: Could not upload video. Guests will not be able to watch.', true);
+            }
+        }
+
+        // ── Message router ───────────────────────────────────
+        function onMsg(e) {
+            const m = e.data;
+            if (m.room && m.room !== room.name) return;
+
+            switch (m.type) {
+
+                // HOST side
+                case 'guest_hello':
+                    if (!isHost) return;
+                    if (m.key !== room.key) { bcast({ type: 'bad_key', room: room.name }); return; }
+                    sysMsg('Guest connected…');
+                    if (room.ytId) {
+                        const t = ytPlayer ? ytPlayer.getCurrentTime() : 0;
+                        const playing = ytPlayer && ytPlayer.getPlayerState() === 1;
+                        bcast({ type: 'yt_load', room: room.name, ytId: room.ytId, time: t, playing });
+                    } else {
+                        if (hostStreamUrl) {
+                            bcast({ type: 'stream_url', room: room.name, url: hostStreamUrl, mime: hostFile ? hostFile.type : 'video/mp4' });
+                        }
+                    }
+                    break;
+
+                case 'chat':
+                    if (isHost) addMsg('them', 'Guest: ' + esc(m.text));
+                    break;
+
+                case 'reaction':
+                    spawnReaction(m.emoji);
+                    if (isHost) bcast(m); // Relay to other guests
+                    break;
+
+                // GUEST side
+                case 'bad_key':
+                    if (isHost) return;
+                    toast('Wrong security key — access denied', 'err');
+                    leaveRoom(true);
+                    break;
+
+                case 'stream_url':
+                    if (isHost) return;
+                    sysMsg('Streaming video from server...');
+                    setPlayerSrc(m.url, m.mime);
+                    setStatus('ok', 'Host connected');
+                    attachSharedListeners();
+                    break;
+
+                case 'play':
+                case 'pause':
+                case 'seek':
+                    applySync(m.type, m.time);
+                    syncMsg((isHost ? 'Guest ' : 'Host ') + (m.type === 'play' ? '▶' : m.type === 'pause' ? '⏸' : '⏩') + ' ' + fmt(m.time));
+
+                    // Host relays the guest command to all other connected guests
+                    if (isHost) {
+                        connections.forEach(c => { if (c.open) c.send(e.data); });
+                    }
+                    break;
+
+                case 'heartbeat':
+                    if (isHost) return;
+                    if (ytPlayer && room && room.ytId) {
+                        const ct = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+                        if (Math.abs(ct - m.time) > 2) {
+                            if (ytPlayer.seekTo) ytPlayer.seekTo(m.time, true);
+                            if (!m.playing && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+                            syncMsg('Drift fixed → ' + fmt(m.time));
+                        }
+                        if (m.playing && ytPlayer.getPlayerState !== undefined && ytPlayer.getPlayerState() !== 1) ytPlayer.playVideo();
+                        if (!m.playing && ytPlayer.getPlayerState !== undefined && ytPlayer.getPlayerState() === 1) ytPlayer.pauseVideo();
+                    } else if (player) {
+                        if (Math.abs(player.currentTime - m.time) > 2) {
+                            expectedSyncTime = m.time;
+                            player.currentTime = m.time;
+                            syncMsg('Drift fixed → ' + fmt(m.time));
+                        }
+                        if (m.playing && player.paused) {
+                            expectedPlayState = 'play';
+                            player.play().catch(err => {
+                                if (err.name === 'NotAllowedError') toast('Click anywhere or press play to sync', 'warn');
+                            });
+                        }
+                        if (!m.playing && !player.paused) {
+                            expectedPlayState = 'pause';
+                            player.pause();
+                        }
+                    }
+                    break;
+
+                case 'yt_load':
+                    if (isHost) return;
+                    if (!room) room = {};
+                    room.ytId = m.ytId;
+                    pendingYtSync = { time: m.time, playing: m.playing };
+                    initYTPlayer(m.ytId);
+                    sysMsg('Loading YouTube video…');
+                    setStatus('ok', 'Host connected');
+                    break;
+
+                case 'chat_host':
+                    if (!isHost) addMsg('them', 'Host: ' + esc(m.text));
+                    break;
+            }
+        }
+
+        // ── Guest chunk handling ─────────────────────────────
+        function onChunk(m) {
+            if (gTotal === 0) {
+                gTotal = m.total;
+                gMime = m.mime;
+                gChunks = new Array(m.total);
+                gReceived = 0;
+                noMedia('<i class="fas fa-spinner fa-spin"></i>', 'Receiving video stream from host…');
+                setStatus('wait', 'Receiving…');
+            }
+            gChunks[m.index] = m.data;
+            gReceived++;
+            document.getElementById('loadBar').style.width = (gReceived / gTotal * 100) + '%';
+        }
+
+        function buildGuestMedia(mime) {
+            const blob = new Blob(gChunks, { type: mime });
+            const url = URL.createObjectURL(blob);
+            setPlayerSrc(url, mime);
+            document.getElementById('loadBar').style.width = '100%';
+            setTimeout(() => { document.getElementById('loadBar').style.width = '0%'; }, 900);
+            
+            if (room && room.name) {
+                idbSave(blob, room.name).catch(() => {});
+                guestHasFile = true;
+            }
+
+            setStatus('ok', 'Host connected');
+            sysMsg('Video received! Syncing with host…');
+            gChunks = []; gTotal = 0; gReceived = 0;
+            attachSharedListeners();
+        }
+
+        // ── Player ───────────────────────────────────────────
+        function setPlayerSrc(url, mime, resumeTime = 0) {
+            document.getElementById('noMedia').style.display = 'none';
+
+            // Hide YouTube player
+            const ytContainer = document.getElementById('ytPlayer');
+            ytContainer.style.display = 'none';
+            ytContainer.innerHTML = '';
+            if (ytPlayer && ytPlayer.destroy) { ytPlayer.destroy(); ytPlayer = null; }
+            if (mime.startsWith('video/')) {
+                ap.style.display = 'none'; ap.src = '';
+                vp.src = url; vp.style.display = 'block';
+                player = vp;
+            } else {
+                vp.style.display = 'none'; vp.src = '';
+                ap.src = url; ap.style.display = 'block';
+                player = ap;
+            }
+            if (resumeTime > 0) {
+                player.addEventListener('loadedmetadata', function onMeta() {
+                    player.removeEventListener('loadedmetadata', onMeta);
+                    player.currentTime = resumeTime;
+                });
+            }
+        }
+
+        function noMedia(icon, text) {
+            const el = document.getElementById('noMedia');
+            el.style.display = 'flex';
+            el.innerHTML = `<span style="font-size:2.5rem;margin-bottom:12px;color:rgba(255,255,255,.2)">${icon}</span><p>${text}</p>`;
+        }
+
+        // ── Shared event listeners ─────────────────────────────
+        let sharedListenersAttached = false;
+        function attachSharedListeners() {
+            if (sharedListenersAttached || !player) return;
+            player.addEventListener('play', () => { 
+                if (expectedPlayState === 'play') { expectedPlayState = null; return; }
+                bcast({ type: 'play', room: room.name, time: player.currentTime }); 
+            });
+            player.addEventListener('pause', () => { 
+                if (expectedPlayState === 'pause') { expectedPlayState = null; return; }
+                bcast({ type: 'pause', room: room.name, time: player.currentTime }); 
+            });
+            player.addEventListener('seeked', () => { 
+                if (expectedSyncTime !== null && Math.abs(player.currentTime - expectedSyncTime) < 1) {
+                    expectedSyncTime = null;
+                    return;
+                }
+                bcast({ type: 'seek', room: room.name, time: player.currentTime }); 
+            });
+            sharedListenersAttached = true;
+        }
+
+        function attachYTHostListeners() {
+            // YT state changes are handled inside initYTPlayer's onStateChange callback
+        }
+
+        function startHeartbeat() {
+            clearInterval(hbTimer);
+            hbTimer = setInterval(() => {
+                if (!room) return;
+                if (ytPlayer && room.ytId && ytPlayer.getCurrentTime) {
+                    const t = ytPlayer.getCurrentTime();
+                    const playing = ytPlayer.getPlayerState() === 1; // 1 = PLAYING
+                    bcast({ type: 'heartbeat', room: room.name, time: t, playing });
+                    saveSession({ time: t, playing });
+                } else if (player) {
+                    bcast({ type: 'heartbeat', room: room.name, time: player.currentTime, playing: !player.paused });
+                    saveSession({ time: player.currentTime, playing: !player.paused });
+                }
+            }, HEARTBEAT_MS);
+        }
+
+        // ── Synchronization Apply ────────────────────────────
+        function applySync(action, time) {
+            if (ytPlayer && room && room.ytId) {
+                if (ytPlayer.seekTo && Math.abs(ytPlayer.getCurrentTime() - time) > 1) ytPlayer.seekTo(time, true);
+                if (action === 'play') ytPlayer.playVideo();
+                if (action === 'pause') ytPlayer.pauseVideo();
+                return;
+            }
+            if (!player) return;
+            
+            if (action === 'seek' || Math.abs(player.currentTime - time) > 1) {
+                expectedSyncTime = time;
+                player.currentTime = time;
+            }
+            if (action === 'play') {
+                expectedPlayState = 'play';
+                player.play().catch(err => {
+                    if (err.name === 'NotAllowedError') toast('Click anywhere or press play to sync', 'warn');
+                });
+            }
+            if (action === 'pause') {
+                expectedPlayState = 'pause';
+                player.pause();
+            }
+        }
+
+        document.addEventListener('fullscreenchange', handleFsChange);
+        document.addEventListener('webkitfullscreenchange', handleFsChange);
+
+        function handleFsChange() {
+            const pa = document.querySelector('.player-area');
+            const ca = document.getElementById('chatArea');
+            const isFs = document.fullscreenElement === pa || document.webkitFullscreenElement === pa;
+            if (isFs) {
+                pa.appendChild(ca);
+            } else {
+                document.querySelector('.room-wrap').appendChild(ca);
+                ca.classList.remove('show-fs');
+                document.getElementById('fsChatBadge').style.display = 'none';
+            }
+        }
+
+        function toggleFsChat() {
+            const ca = document.getElementById('chatArea');
+            ca.classList.toggle('show-fs');
+            if (ca.classList.contains('show-fs')) {
+                document.getElementById('fsChatBadge').style.display = 'none';
+            }
+        }
+
+        // ── Manual controls ──────────────────────────────────
+        function toggleFullscreen() {
+            const pa = document.querySelector('.player-area');
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (pa.requestFullscreen) {
+                    pa.requestFullscreen();
+                } else if (pa.webkitRequestFullscreen) {
+                    pa.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+
+        function ctrlPlay() {
+            if (ytPlayer && room && room.ytId) {
+                ytPlayer.playVideo();
+                bcast({ type: 'play', room: room.name, time: ytPlayer.getCurrentTime() });
+                return;
+            }
+            if (!player) { toast('No media loaded', 'err'); return; }
+            player.play().catch(() => { });
+            bcast({ type: 'play', room: room.name, time: player.currentTime });
+        }
+        function ctrlPause() {
+            if (ytPlayer && room && room.ytId) {
+                ytPlayer.pauseVideo();
+                bcast({ type: 'pause', room: room.name, time: ytPlayer.getCurrentTime() });
+                return;
+            }
+            if (!player) return;
+            player.pause();
+            bcast({ type: 'pause', room: room.name, time: player.currentTime });
+        }
+        function ctrlSeek(d) {
+            if (ytPlayer && room && room.ytId) {
+                const t = Math.max(0, (ytPlayer.getCurrentTime() || 0) + d);
+                ytPlayer.seekTo(t, true);
+                bcast({ type: 'seek', room: room.name, time: t });
+                return;
+            }
+            if (!player) return;
+            player.currentTime = Math.max(0, (player.currentTime || 0) + d);
+            bcast({ type: 'seek', room: room.name, time: player.currentTime });
+        }
+
+        // ── Leave ────────────────────────────────────────────
+        function leaveRoom(silent) {
+            if (!silent && !confirm('Leave the room?')) return;
+            clearInterval(hbTimer);
+            if (peer) { peer.destroy(); peer = null; }
+            connections = []; hostConn = null;
+            [vp, ap].forEach(p => { p.pause(); p.src = ''; p.style.display = 'none'; });
+            if (ytPlayer) {
+                try { ytPlayer.stopVideo(); } catch (_) { }
+                document.getElementById('ytPlayer').style.display = 'none';
+                ytPlayer.destroy();
+                ytPlayer = null;
+            }
+            const overlay = document.getElementById('ytOverlay');
+            if (overlay) overlay.style.display = 'none';
+            document.getElementById('noMedia').style.display = 'flex';
+            room = null; player = null; isHost = false; hostFile = null; guestHasFile = false;
+            gChunks = []; gTotal = 0; hostListenersAttached = false;
+
+            ['cRoomName', 'cYTUrl', 'cFile', 'jRoomName', 'jKey'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
+            clearSession();
+            goPage('pgLanding');
+            if (!silent) toast('Left the room', 'info');
+        }
+
+        // ── Chat ─────────────────────────────────────────────
+        function sendChat() {
+            const inp = document.getElementById('chatIn');
+            const txt = inp.value.trim();
+            if (!txt || !room) return;
+            inp.value = '';
+            addMsg('me', txt);
+            bcast({ type: isHost ? 'chat_host' : 'chat', room: room.name, text: txt });
+        }
+
+        function sendReaction(emoji) {
+            if (!room) return;
+            spawnReaction(emoji);
+            bcast({ type: 'reaction', room: room.name, emoji: emoji });
+        }
+
+        function spawnReaction(emoji) {
+            const pa = document.querySelector('.player-area');
+            const bubble = document.createElement('div');
+            bubble.className = 'rxn-bubble';
+            bubble.textContent = emoji;
+            pa.appendChild(bubble);
+            setTimeout(() => { bubble.remove(); }, 2000);
+        }
+
+        // ── Draggable Chat ───────────────────────────────────
+        let isDraggingChat = false;
+        let chatDragStartX, chatDragStartY, chatStartLeft, chatStartTop;
+        const chatHdr = document.querySelector('.chat-hdr');
+        const chatArea = document.getElementById('chatArea');
+
+        chatHdr.addEventListener('mousedown', (e) => {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) return;
+            if (e.target.closest('#fsChatCloseBtn')) return;
+
+            isDraggingChat = true;
+            chatDragStartX = e.clientX;
+            chatDragStartY = e.clientY;
+
+            const rect = chatArea.getBoundingClientRect();
+            const parentRect = chatArea.parentElement.getBoundingClientRect();
+            chatStartLeft = rect.left - parentRect.left;
+            chatStartTop = rect.top - parentRect.top;
+
+            chatArea.style.right = 'auto';
+            chatArea.style.bottom = 'auto';
+            chatArea.style.left = chatStartLeft + 'px';
+            chatArea.style.top = chatStartTop + 'px';
+            chatArea.style.margin = '0';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDraggingChat) return;
+            let newLeft = chatStartLeft + (e.clientX - chatDragStartX);
+            let newTop = chatStartTop + (e.clientY - chatDragStartY);
+            
+            const parentRect = chatArea.parentElement.getBoundingClientRect();
+            const chatRect = chatArea.getBoundingClientRect();
+            
+            if (newLeft < 0) newLeft = 0;
+            if (newTop < 0) newTop = 0;
+            if (newLeft + chatRect.width > parentRect.width) newLeft = parentRect.width - chatRect.width;
+            if (newTop + chatRect.height > parentRect.height) newTop = parentRect.height - chatRect.height;
+
+            chatArea.style.left = newLeft + 'px';
+            chatArea.style.top = newTop + 'px';
+        });
+
+        window.addEventListener('mouseup', () => { isDraggingChat = false; });
+
+        // ── Helpers ───────────────────────────────────────────
+        function bcast(data) {
+            if (isHost) {
+                connections.forEach(c => {
+                    if (c.open) c.send(data);
+                });
+            } else {
+                if (hostConn && hostConn.open) hostConn.send(data);
+            }
+        }
+
+        function setStatus(state, label) {
+            document.getElementById('sDot').className = 'dot ' + (state === 'ok' ? 'ok' : state === 'err' ? 'err' : 'wait');
+            document.getElementById('sLabel').textContent = label;
+        }
+
+        function addMsg(cls, html) {
+            const box = document.getElementById('msgs');
+            const d = document.createElement('div');
+            d.className = 'msg ' + cls;
+            d.innerHTML = html;
+            box.appendChild(d);
+            box.scrollTop = box.scrollHeight;
+
+            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            if (isFs && cls !== 'me' && cls !== 'sys') {
+                const ca = document.getElementById('chatArea');
+                if (!ca.classList.contains('show-fs')) {
+                    ca.classList.add('show-fs');
+                }
+                const badge = document.getElementById('fsChatBadge');
+                badge.style.display = 'inline-block';
+                badge.textContent = '!';
+            }
+        }
+
+        function sysMsg(t, isSync) {
+            if (!t) return;
+            const box = document.getElementById('msgs');
+            const d = document.createElement('div');
+            d.className = isSync ? ('msg synclog' + (showSync ? ' vis' : '')) : 'msg sys';
+            d.textContent = t;
+            box.appendChild(d);
+            box.scrollTop = box.scrollHeight;
+        }
+        function syncMsg(t) { sysMsg(t, true); }
+
+        function toggleSync() {
+            showSync = !showSync;
+            document.querySelectorAll('.msg.synclog').forEach(m => m.classList.toggle('vis', showSync));
+            document.getElementById('syncToggle').innerHTML = showSync
+                ? '<i class="fas fa-eye-slash"></i> Hide log'
+                : '<i class="fas fa-eye"></i> Sync log';
+        }
+
+        function fmt(s) { s = Math.floor(s || 0); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+        function esc(s) { const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+        function genKey() { return Array.from({ length: 8 }, () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]).join(''); }
+
+        function toast(msg, type) {
+            const el = document.createElement('div');
+            const bg = type === 'ok' ? '#22c97a' : type === 'err' ? '#ef4444' : type === 'warn' ? '#f59e0b' : '#6366f1';
+            el.textContent = msg;
+            Object.assign(el.style, {
+                position: 'fixed', top: '20px', right: '20px', padding: '11px 18px',
+                borderRadius: '10px', color: '#fff', fontWeight: '500', zIndex: '9999',
+                background: bg, fontFamily: 'DM Sans,sans-serif', fontSize: '14px',
+                boxShadow: '0 4px 18px rgba(0,0,0,.35)', animation: '_ti .3s ease'
+            });
+            document.body.appendChild(el);
+            setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 3000);
+        }
+        const _s = document.createElement('style');
+        _s.textContent = '@keyframes _ti{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}';
+        document.head.appendChild(_s);
+
+        // Auto-restore session on page load
+        tryRestore();
+    </script>
+</body>
+
+</html>
